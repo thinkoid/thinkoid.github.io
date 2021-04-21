@@ -1,0 +1,43 @@
+#header {
+    height: 120px;
+}
+
+#container {
+    width: 100%;
+    margin: 0 auto;
+}
+
+#primary {
+    float: left;
+    width: 20%;
+}
+
+#content {
+    float: left;
+    width: 60%;
+}
+
+#title {
+    top: 0; left: 0;
+    text-align: right;
+    font-family: "Oswald", sans-serif;
+}
+
+#text {
+    top: 0; left: 0;
+    font-family: 'Roboto', sans-serif;
+}
+
+#code {
+    top: 0; left: 0;
+    font-family: 'Source Code Pro';
+}
+
+#secondary {
+    float: left;
+    width: 20%;
+}
+
+#footer {
+    clear: both;
+}
