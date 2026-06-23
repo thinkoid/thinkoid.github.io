@@ -1,43 +1,74 @@
-#header {
-    height: 120px;
+:root {
+  font-family:
+    ui-monospace,
+    "SFMono-Regular",
+    "Cascadia Code",
+    "Roboto Mono",
+    "DejaVu Sans Mono",
+    Consolas,
+    monospace;
+
+  color: #111;
+  background: #fff;
 }
 
-#container {
-    width: 100%;
-    margin: 0 auto;
+* {
+  box-sizing: border-box;
 }
 
-#primary {
-    float: left;
-    width: 20%;
+html {
+  min-height: 100%;
 }
 
-#content {
-    float: left;
-    width: 60%;
+body {
+  min-height: 100svh;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 4vw, 3rem);
 }
 
-#title {
-    top: 0; left: 0;
-    text-align: right;
-    font-family: "Oswald", sans-serif;
+main {
+  width: min(100%, 52rem);
+  padding: clamp(2rem, 7vw, 5rem);
+  border: 1px solid #111;
 }
 
-#text {
-    top: 0; left: 0;
-    font-family: 'Roboto', sans-serif;
+.logo {
+  display: block;
+  width: min(100%, 22rem);
+  height: auto;
+  margin-left: auto;
 }
 
-#code {
-    top: 0; left: 0;
-    font-family: 'Fira Mono';
+nav {
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #111;
 }
 
-#secondary {
-    float: left;
-    width: 20%;
+a {
+  color: inherit;
+  text-decoration: none;
 }
 
-#footer {
-    clear: both;
+a:hover,
+a:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+a:focus-visible {
+  outline: 1px solid #111;
+  outline-offset: 0.35rem;
+}
+
+@media (max-width: 36rem) {
+  main {
+    padding: 2rem;
+  }
+
+  .logo {
+    margin-left: 0;
+  }
 }
