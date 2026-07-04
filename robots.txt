@@ -1,0 +1,22 @@
+# Search engines are welcome.  AI-training crawlers are refused: the
+# user agents below are the published opt-out tokens for model-training
+# corpora.  Advisory, as all of robots.txt is.
+
+User-agent: GPTBot
+User-agent: CCBot
+User-agent: ClaudeBot
+User-agent: anthropic-ai
+User-agent: Claude-Web
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: Meta-ExternalAgent
+User-agent: FacebookBot
+User-agent: Bytespider
+User-agent: PerplexityBot
+User-agent: cohere-ai
+User-agent: Diffbot
+User-agent: Omgilibot
+Disallow: /
+
+User-agent: *
+Disallow:
