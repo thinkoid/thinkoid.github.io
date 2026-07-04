@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>pdfalo — Thinkoid</title>
+  <meta name="description" content="An exercise in style: a small LALR parser for PDF syntax, built on GNU Bison's C++ skeleton.">
+
+  <link rel="stylesheet" href="css/simple.css">
+</head>
+
+<body>
+  <main>
+    <a href="./">
+      <img
+        class="logo"
+        src="img/transparent-logo-invert.png"
+        alt="Thinkoid">
+    </a>
+
+    <h1>pdfalo</h1>
+
+    <p class="story">
+      An exercise in style: the same PDF syntax the other parsers read, this
+      time through GNU Bison&rsquo;s C++ <code>lalr1.cc</code> skeleton — a
+      deliberately small, non-validating LALR parser producing a move-only
+      AST. The grammar stays honest about one useful distinction: an indirect
+      object&rsquo;s body is an ordered sequence of syntactic objects, so a
+      dictionary followed by a stream is two adjacent objects, not one thing
+      pretending to be another.
+    </p>
+
+    <p class="story">
+      It parses; it does not validate and it does not model. Alongside
+      <a href="ypdf.html">ypdf</a>&rsquo;s recursive descent it is scored
+      against <a href="xpdf.html">xpdf</a>&rsquo;s object dumps over a shared
+      corpus — three parsers, three paradigms, one oracle.
+    </p>
+
+    <nav aria-label="Primary">
+      <a href="https://codeberg.org/thinkoid/pdfalo">
+        source, on codeberg<span aria-hidden="true"> →</span>
+      </a>
+      <a href="./">
+        <span aria-hidden="true">← </span>thinkoid.org
+      </a>
+    </nav>
+  </main>
+</body>
+</html>

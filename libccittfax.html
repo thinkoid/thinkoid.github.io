@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>libccittfax — Thinkoid</title>
+  <meta name="description" content="A clean-room CCITT Group 3 / Group 4 fax codec, shaped the way PDF needs it.">
+
+  <link rel="stylesheet" href="css/simple.css">
+</head>
+
+<body>
+  <main>
+    <a href="./">
+      <img
+        class="logo"
+        src="img/transparent-logo-invert.png"
+        alt="Thinkoid">
+    </a>
+
+    <h1>libccittfax</h1>
+
+    <p class="story">
+      The CCITT T.4 and T.6 recommendations were written for fax machines:
+      terminal sizes, line lengths in millimetres, signal timing,
+      return-to-control. PDF borrows the codec and discards the machine — what
+      remains is a bit-serial compression scheme embedded in a byte-oriented
+      stream, with its own knobs for alignment, end-of-line handling and
+      padding.
+    </p>
+
+    <p class="story">
+      libccittfax implements exactly that remainder: a clean-room Group&nbsp;3 /
+      Group&nbsp;4 decoder shaped the way PDF&rsquo;s CCITTFaxDecode filter
+      needs it, small enough to sit behind a plain C API or a C++
+      boost::iostreams filter. It is the fax codec behind
+      <a href="ypdf.html">ypdf</a>.
+    </p>
+
+    <p class="story">
+      The project has a history of abandonment: I wrote the one-dimensional
+      Group&nbsp;3 codec, lost steam and interest, and with them all hope of
+      ever finding the time and energy to finish. A few attempts were made at
+      completing it with the help of LLMs — notably ChatGPT and DeepSeek —
+      but it was Claude that delivered the code quality that finished the
+      work.
+    </p>
+
+    <nav aria-label="Primary">
+      <a href="https://codeberg.org/thinkoid/libccittfax">
+        source, on codeberg<span aria-hidden="true"> →</span>
+      </a>
+      <a href="./">
+        <span aria-hidden="true">← </span>thinkoid.org
+      </a>
+    </nav>
+  </main>
+</body>
+</html>

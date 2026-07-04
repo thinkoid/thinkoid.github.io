@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>libfaxtiff — Thinkoid</title>
+  <meta name="description" content="The CCITT Group 3 / Group 4 fax codec carved out of libtiff, behind a tiny buffer-in / buffer-out C API.">
+
+  <link rel="stylesheet" href="css/simple.css">
+</head>
+
+<body>
+  <main>
+    <a href="./">
+      <img
+        class="logo"
+        src="img/transparent-logo-invert.png"
+        alt="Thinkoid">
+    </a>
+
+    <h1>libfaxtiff</h1>
+
+    <p class="story">
+      Sam Leffler&rsquo;s CCITT fax codec has shipped inside libtiff since the
+      early 1990s — one of the most battle-tested Group&nbsp;3 /
+      Group&nbsp;4 implementations in existence, and thoroughly entangled
+      with the TIFF container machinery around it. libfaxtiff is that codec,
+      carved out: lifted from libtiff, freed of the file format, and wrapped
+      behind a tiny buffer-in / buffer-out C API.
+    </p>
+
+    <p class="story">
+      I made a couple of attempts at the carving myself and got lost, both
+      times, in the details that tangle the fax code into TIFF processing.
+      The current incarnation is largely the result of one afternoon of
+      interaction with Claude.
+    </p>
+
+    <p class="story">
+      It compresses and decompresses raw 1-bit rasters in the T.4 and T.6
+      variants (G3 one- and two-dimensional, G4), depends on nothing, and
+      ships with a pair of command-line tools for round-tripping images. It is
+      the fax codec behind <a href="xpdf.html">xpdf</a>. Extraction as
+      preservation: the codec keeps working long after the scaffolding it grew
+      in has become the hard part.
+    </p>
+
+    <nav aria-label="Primary">
+      <a href="https://codeberg.org/thinkoid/libfaxtiff">
+        source, on codeberg<span aria-hidden="true"> →</span>
+      </a>
+      <a href="./">
+        <span aria-hidden="true">← </span>thinkoid.org
+      </a>
+    </nav>
+  </main>
+</body>
+</html>

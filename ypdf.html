@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>ypdf — Thinkoid</title>
+  <meta name="description" content="A PDF parser built from small composable parsers, tested byte-for-byte against xpdf.">
+
+  <link rel="stylesheet" href="css/simple.css">
+</head>
+
+<body>
+  <main>
+    <a href="./">
+      <img
+        class="logo"
+        src="img/transparent-logo-invert.png"
+        alt="Thinkoid">
+    </a>
+
+    <h1>ypdf</h1>
+
+    <p class="story">
+      ypdf began in 2020 as a minimal recursive-descent parser: small,
+      composable parsing functions all the way down, an AST of plain values,
+      boost::iostreams filter chains for stream decoding. Then it stalled, for
+      the longest time, on a missing piece — a CCITT fax codec for the stream
+      filters — and relaunched once
+      <a href="libccittfax.html">libccittfax</a> existed to fill the gap.
+    </p>
+
+    <p class="story">
+      Since then development has gone back and forth between this project and
+      <a href="xpdf.html">xpdf</a>, continuously adjusted in whatever
+      direction appeared most natural at each step. ypdf has grown into a
+      small library with a document model: cross-reference tables and
+      streams, object streams, a linear-scan fallback for broken files, and a
+      central filter dispatcher.
+    </p>
+
+    <p class="story">
+      It is developed against an oracle: over a shared corpus, ypdf&rsquo;s
+      decoded streams are compared byte-for-byte with xpdf&rsquo;s. The two
+      projects keep each other honest — the old code checks the new design,
+      the new design questions the old code.
+    </p>
+
+    <nav aria-label="Primary">
+      <a href="https://codeberg.org/thinkoid/ypdf">
+        source, on codeberg<span aria-hidden="true"> →</span>
+      </a>
+      <a href="./">
+        <span aria-hidden="true">← </span>thinkoid.org
+      </a>
+    </nav>
+  </main>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>xpdf — Thinkoid</title>
+  <meta name="description" content="Xpdf 3.04 modernized incrementally to C++17, every step pinned by a regression oracle against the stock build.">
+
+  <link rel="stylesheet" href="css/simple.css">
+</head>
+
+<body>
+  <main>
+    <a href="./">
+      <img
+        class="logo"
+        src="img/transparent-logo-invert.png"
+        alt="Thinkoid">
+    </a>
+
+    <h1>xpdf</h1>
+
+    <p class="story">
+      Xpdf 3.04 — the last of the Motif line — is mid-1990s C++: hand-rolled
+      containers, bespoke codecs, its own string class. It is also a
+      remarkably robust PDF implementation, hardened by two decades of
+      malformed documents in the wild. I started this fork strictly to learn
+      PDF processing — or rather, to glimpse into others&rsquo; attempts at
+      it.
+    </p>
+
+    <p class="story">
+      Slowly carving at the edges, developing my own parser
+      (<a href="ypdf.html">ypdf</a>) in parallel, I developed a sense of where
+      the project was supposed to go: everything non-parsing, non-modeling
+      dropped to the side, and it ended in the shape it holds today — a parser
+      with a document model. The modernization is incremental C++17, without
+      spending the accumulated robustness: the codec family is delegated to
+      mainstream libraries (and <a href="libfaxtiff.html">libfaxtiff</a> for
+      the fax filters), the stream machinery is rebuilt on boost::iostreams,
+      and every step is pinned by a regression oracle against the stock build
+      over a large corpus.
+    </p>
+
+    <p class="story">
+      Software archaeology in the literal sense: the value of old code is the
+      knowledge buried in it, and the point of the dig is to carry the
+      knowledge forward, not the artifacts.
+    </p>
+
+    <nav aria-label="Primary">
+      <a href="https://codeberg.org/thinkoid/xpdf">
+        source, on codeberg<span aria-hidden="true"> →</span>
+      </a>
+      <a href="./">
+        <span aria-hidden="true">← </span>thinkoid.org
+      </a>
+    </nav>
+  </main>
+</body>
+</html>

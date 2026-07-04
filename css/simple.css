@@ -47,6 +47,23 @@ nav {
   border-top: 1px solid #111;
 }
 
+nav a {
+  display: block;
+  width: fit-content;
+  padding: 0.3rem 0;
+}
+
+h1 {
+  margin: 2.5rem 0 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.story {
+  max-width: 42rem;
+  line-height: 1.55;
+}
+
 a {
   color: inherit;
   text-decoration: none;
