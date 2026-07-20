@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>openspace-fs2 — Thinkoid</title>
+  <meta name="description" content="Thinkoid openspace-fs2 project.">
+
+  <link rel="stylesheet" href="css/simple.css">
+</head>
+
+<body>
+  <main>
+    <a href="./">
+      <img
+        class="logo"
+        src="img/transparent-logo-invert.png"
+        alt="Thinkoid">
+    </a>
+
+    <h1>openspace-fs2</h1>
+
+    <p class="story">
+      openspace-fs2 is a Linux port of the original 1998 FreeSpace&nbsp;2
+      engine — <strong><u>NOT</u></strong> the community fork, but
+      Volition&rsquo;s pristine 2002 CVS source. It remains deliberately
+      retail: the original campaign and
+      scripting language, single-player only, with no community extensions.
+      fs2open is kept nearby as a reference and &ldquo;fix-mine,&rdquo; never
+      as a foundation.
+    </p>
+
+    <p class="story">
+      The game runs at 1024&times;768 through both its revived 8-bit software
+      rasterizer and OpenGL backend, matched frame for frame. Removing
+      multiplayer and obsolete subsystems cut the codebase from roughly
+      404,000 lines to 146,000. Examining some 2,500 community-fork commits
+      yielded 20 genuine retail fixes — and revealed that several famous
+      &ldquo;Volition bugs&rdquo; were actually regressions introduced by the
+      fork.
+    </p>
+
+    <p class="story">
+      But the port is a means, not the end: understanding is the deliverable,
+      and working code is the proof. The SEXP scripting reader was carved out
+      and verified across 24,504 mission trees; the POF loader across all 176
+      retail models. Alongside them sits an x87-era rasterizer whose float-bit
+      tricks silently change under SSE2 — a preserved specimen from the
+      transition to GPU rendering. <a href="pofview.html">pofview</a> is the
+      smaller sibling of this work, approaching the same POF format from the
+      viewer side.
+    </p>
+
+    <nav aria-label="Primary">
+      <a href="https://codeberg.org/thinkoid/openspace-fs2">
+        source, on codeberg<span aria-hidden="true"> →</span>
+      </a>
+      <a href="freespace2.html">
+        <span aria-hidden="true">← </span>FreeSpace 2 projects
+      </a>
+    </nav>
+  </main>
+</body>
+</html>

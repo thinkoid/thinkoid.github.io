@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>pofview — Thinkoid</title>
+  <meta name="description" content="Thinkoid pofview project.">
+
+  <link rel="stylesheet" href="css/simple.css">
+</head>
+
+<body>
+  <main>
+    <a href="./">
+      <img
+        class="logo"
+        src="img/transparent-logo-invert.png"
+        alt="Thinkoid">
+    </a>
+
+    <h1>pofview</h1>
+
+    <p class="story">
+      pofview does one thing: it opens FreeSpace&nbsp;2 POF
+      (<code>.pof</code>) models and lets you look around. Point it at a model
+      and a standalone POF library loads the geometry; Qt Quick&nbsp;3D turns
+      it into a shaded surface you can orbit. It is small, Linux-only, and
+      deliberately narrow: no editing, no importers or exporters, just a
+      clean way to open a <code>.pof</code> and see what is inside.
+    </p>
+
+    <p class="story">
+      Behind that small remit is a long lineage. pofview descends from the
+      FreeSpace community&rsquo;s POF Constructor Suite&nbsp;2, the editor
+      used to build many of these models. It sets aside the editor&rsquo;s UI
+      and toolchain, keeps its file loader, extracts it into a standalone
+      library, and gradually brings the code into modern C++. The difficult
+      archaeology — understanding the format — was done long ago by others;
+      this is a quieter, read-only reframing of that work, kept faithful to
+      the models it was always meant to open. Sources are linked below.
+    </p>
+
+    <nav aria-label="Primary">
+      <a href="https://codeberg.org/thinkoid/pofview">
+        source, on codeberg<span aria-hidden="true"> →</span>
+      </a>
+      <a href="freespace2.html">
+        <span aria-hidden="true">← </span>FreeSpace 2 projects
+      </a>
+    </nav>
+  </main>
+</body>
+</html>
