@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>tyler — Thinkoid</title>
+  <meta name="description" content="Thinkoid tyler project: a Wayland tiling compositor written by Claude.">
+
+  <link rel="stylesheet" href="css/simple.css">
+</head>
+
+<body>
+  <main>
+    <a href="./">
+      <img
+        class="logo"
+        src="img/transparent-logo-invert.png"
+        alt="Thinkoid">
+    </a>
+
+    <h1>tyler</h1>
+
+    <p class="story">
+      tyler is a dwm-descendant tiling compositor for Wayland — a single
+      C file of roughly 3,200 lines on wlroots, configured by recompiling
+      its header, in the suckless tradition. It began as an X11 window
+      manager grown from dwm; when a survey of the Wayland tiling
+      landscape kept finding the same gaps — urgency that gets dropped,
+      empty outputs that cannot hold focus, layouts shredded by
+      hibernate/resume output churn, patch stacks that rot — the verdict
+      was to own the monolith: rewrite the window manager one platform up,
+      with dwl as template and debugging reference, and turn every upstream
+      complaint into a design criterion.
+    </p>
+
+    <p class="story">
+      The scope is a complete daily desktop living <em>inside</em> the
+      compositor: master/stack tiling with per-screen tags, sloppy focus
+      over a global focus stack, a compositor-drawn status bar with color
+      escapes, an integrated dmenu-style launcher (no grabs — the
+      compositor owns the keyboard), internal scene-to-PNG screenshots,
+      clipboard and primary selection, server-side decorations, per-device
+      libinput policy, media keys, and per-output state that survives
+      outputs dying and returning. No Xwayland, no layer-shell, no helper
+      clients — a deliberately minimal protocol surface.
+    </p>
+
+    <p class="story">
+      It went from an empty repository to a daily driver in eleven days —
+      21 August to 1 September 2026 — with the design settled in two
+      sittings and the implementation landed in roughly four days of
+      sessions. The code was written almost entirely by
+      <strong>Claude</strong> (Anthropic), with minimal intervention from a
+      human programmer, whose contributions were design verdicts, taste,
+      and testing in the saddle. Every feature landed with a headless
+      oracle proving it — scripted virtual input, protocol traces, and
+      pixel-verified bar dumps — before it ever touched real hardware, and
+      each commit is co-signed by a freshly invented pirate.
+    </p>
+
+    <nav aria-label="Primary">
+      <a href="https://github.com/thinkoid/tyler">
+        source, on github<span aria-hidden="true"> →</span>
+      </a>
+      <a href="./">
+        <span aria-hidden="true">← </span>home
+      </a>
+    </nav>
+  </main>
+</body>
+</html>
