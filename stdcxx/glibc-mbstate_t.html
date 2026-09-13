@@ -1,0 +1,521 @@
+<!doctype html>
+<!--
+  Rendered by hand from stdcxx/doc/notes/glibc-mbstate_t.md (the source of
+  the text, in the thinkoid/stdcxx repository) with:
+
+      cmark-gfm -e table -e autolink doc/notes/glibc-mbstate_t.md
+
+  and the fragment pasted between the <article> tags below.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>The __mbstate_t clash — Thinkoid</title>
+  <meta name="description" content="How a 2006 stdcxx header protocol met glibc 2.16, and the fix in the library's own idiom.">
+
+  <link rel="stylesheet" href="../css/simple.css">
+</head>
+
+<body>
+  <main>
+    <a href="../">
+      <img
+        class="logo"
+        src="../img/transparent-logo-invert.png"
+        alt="Thinkoid">
+    </a>
+
+    <article class="story">
+<h1>The <code>__mbstate_t</code> clash: how a 2006 header protocol met glibc 2.16</h1>
+<p><em>Apache stdcxx revival notes, September 2026.</em></p>
+<p>The first thing that fails when the Apache C++ Standard Library is
+built on a current Linux toolchain is a conflicting declaration of
+<code>__mbstate_t</code>. This note traces the failure to its root, which is not
+the compiler and not the language dialect but a change of meaning in a
+single glibc macro, made in 2012, five months before the last commit
+in the stdcxx tree. It then records the fix, made in the library's own
+idiom, and how it was verified against the glibc headers of each era.</p>
+<h2>1. The symptom</h2>
+<p>Toolchain: GCC 16.2, glibc 2.44, the library configured at the
+compiler's default dialect (C++20) with <code>BUILDTYPE=15D</code> (debug,
+shared, threads). The configuration phase succeeds and characterizes
+the compiler correctly on its own. The library build then fails at ten
+sites with one message:</p>
+<pre><code>include/rw/_mbstate.h:146:3: error: conflicting declaration
+    'typedef struct __mbstate_t __mbstate_t'
+/usr/include/bits/types/__mbstate_t.h:21:3: note: previous declaration
+    as 'typedef struct __mbstate_t __mbstate_t'
+</code></pre>
+<p>Both include orders fail. When a translation unit includes <code>&lt;stdio.h&gt;</code>
+first, glibc's definition comes first and stdcxx's is the conflicting
+one. When it includes <code>&lt;iosfwd&gt;</code> or <code>&lt;string&gt;</code> first, the roles swap.
+The struct members are identical in both; the two anonymous structs
+are nonetheless distinct types, and a typedef name cannot denote both.</p>
+<h2>2. What stdcxx was doing, and why</h2>
+<p><code>include/rw/_mbstate.h</code> exists to give <code>&lt;iosfwd&gt;</code>, <code>&lt;codecvt&gt;</code> and
+<code>&lt;locale&gt;</code> the conversion-state type through a single macro,
+<code>_RWSTD_MBSTATE_T</code>, without pulling <code>&lt;wchar.h&gt;</code> into every
+translation unit that names <code>streampos</code>. It dates from January 2006
+and has one branch per platform:</p>
+<table>
+<thead>
+<tr>
+<th>platform</th>
+<th><code>_RWSTD_MBSTATE_T</code></th>
+<th>how obtained</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AIX</td>
+<td><code>char*</code></td>
+<td>typedef in <code>__rw</code></td>
+</tr>
+<tr>
+<td>HP-UX</td>
+<td><code>mbstate_t</code></td>
+<td>the struct replicated, or the system's</td>
+</tr>
+<tr>
+<td>IRIX</td>
+<td><code>char</code></td>
+<td></td>
+</tr>
+<tr>
+<td>MSVC</td>
+<td><code>int</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Solaris</td>
+<td><code>__mbstate_t</code></td>
+<td>the struct replicated under Sun's guard</td>
+</tr>
+<tr>
+<td>Darwin</td>
+<td><code>__mbstate_t</code></td>
+<td><code>#include &lt;machine/_types.h&gt;</code></td>
+</tr>
+<tr>
+<td>Linux/glibc</td>
+<td><code>__mbstate_t</code></td>
+<td>the struct replicated under glibc's guard</td>
+</tr>
+<tr>
+<td>other</td>
+<td><code>std::mbstate_t</code></td>
+<td><code>#include &lt;cwchar&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<p>The Linux branch replicated glibc's private struct and placed it under
+glibc's own guard macro:</p>
+<pre><code class="language-c">#ifndef __mbstate_t_defined
+#  define __mbstate_t_defined 1
+extern &quot;C&quot; {
+typedef struct {
+    int __count;
+    union {
+        _RWSTD_WINT_T __wch;
+        char          __wchb [4];
+    } __value;
+} __mbstate_t;
+}
+#endif
+</code></pre>
+<p>That is a protocol with glibc: whichever side is seen first defines
+the struct and sets the guard, and the other side skips. It was
+correct for every glibc that existed when it was written. The design
+was deliberate, and the Darwin branch beside it shows the alternative
+the library used where the platform offered one: include the platform's
+small internal header instead of copying the struct.</p>
+<p>One detail explains why the Linux branch copies rather than includes.
+stdcxx ships its own <code>&lt;wchar.h&gt;</code> wrapper in <code>include/ansi</code>, and the
+build puts that directory first on the include path. From inside the
+library, <code>#include &lt;wchar.h&gt;</code> resolves to the wrapper, not to glibc.
+The real system header is reachable only by the absolute path the
+configuration records in <code>config.h</code> as <code>_RWSTD_ANSI_C_WCHAR_H</code>.</p>
+<h2>3. How glibc guards <code>mbstate_t</code></h2>
+<h3>3.1 The 1999 split</h3>
+<p>glibc has two names for the conversion state. <code>__mbstate_t</code> is the
+private representation, an anonymous struct typedef under a reserved
+identifier. <code>mbstate_t</code> is the public alias, <code>typedef __mbstate_t mbstate_t</code>, introduced by <code>&lt;wchar.h&gt;</code> and later also by <code>&lt;uchar.h&gt;</code>.</p>
+<p>The split dates from Ulrich Drepper's wide-stream work of June 1999
+(commit <code>d64b6ad075</code>). It exists because <code>&lt;stdio.h&gt;</code> needs the
+representation and must not expose the name. C requires <code>fgetpos</code> and
+<code>fsetpos</code> to save and restore the conversion state together with the
+byte offset (ISO C11 7.21.2p6), so <code>fpos_t</code> embeds the state:</p>
+<pre><code class="language-c">typedef struct _G_fpos_t {
+    __off_t     __pos;
+    __mbstate_t __state;
+} __fpos_t;
+</code></pre>
+<p>In a conforming ISO C mode <code>&lt;stdio.h&gt;</code> alone must leave the ordinary
+identifier <code>mbstate_t</code> free for the program. The reserved name
+<code>__mbstate_t</code> carries the dependency without introducing the public
+one. From this follow two independent facts a header may need to
+know: <em>has the representation been defined</em>, and <em>has the public name
+been introduced</em>. The first can be true while the second is false;
+that is the intended state after <code>&lt;stdio.h&gt;</code>.</p>
+<h3>3.2 Selective inclusion, 1999 to 2.25</h3>
+<p><code>&lt;stdio.h&gt;</code> obtained the representation by asking <code>&lt;wchar.h&gt;</code> for it
+alone:</p>
+<pre><code class="language-c">#define __need_mbstate_t
+#include &lt;wchar.h&gt;
+</code></pre>
+<p><code>&lt;wchar.h&gt;</code> answered with a selector at its top:</p>
+<pre><code class="language-c">#ifndef _WCHAR_H
+#if !defined __need_mbstate_t &amp;&amp; !defined __need_wint_t
+# define _WCHAR_H 1
+# include &lt;features.h&gt;
+#endif
+</code></pre>
+<p>A partial request left <code>_WCHAR_H</code> unset, defined the struct, consumed
+the request macro with <code>#undef</code>, and skipped the rest of the file. A
+later ordinary inclusion then supplied the public alias and the API.
+<code>_WCHAR_H</code> was both the header's include guard and the selector for
+its full content. Despite its spelling, <code>__need_mbstate_t</code> requested
+the private type, not the public alias.</p>
+<p>Through glibc 2.15 the struct was guarded by <code>__mbstate_t_defined</code>,
+and the public alias had no guard of its own beyond <code>_WCHAR_H</code>:</p>
+<pre><code class="language-c">#ifndef __mbstate_t_defined
+# define __mbstate_t_defined 1
+typedef struct { ... } __mbstate_t;
+#endif
+#undef __need_mbstate_t
+
+#ifdef _WCHAR_H
+typedef __mbstate_t mbstate_t;
+</code></pre>
+<p>This is the state of affairs the library's protocol was written against,
+and under it the protocol is sound.</p>
+<h3>3.3 glibc 2.16: the guard is repurposed</h3>
+<p>C11 added <code>&lt;uchar.h&gt;</code>, whose conversion functions <code>mbrtoc16</code>,
+<code>c16rtomb</code>, <code>mbrtoc32</code> and <code>c32rtomb</code> take <code>mbstate_t*</code>. <code>&lt;uchar.h&gt;</code>
+therefore had to introduce the public alias without exposing the rest
+of <code>&lt;wchar.h&gt;</code>. Drepper's &quot;Add uchar.h support, part 1&quot; (authored
+2011-12-28, committed 2012-01-01, commit <code>db6af3ebf4</code>, released in
+glibc 2.16 on 2012-06-30) gave the public alias a guard shared by the
+two headers, and it reused the existing name for it. The struct's
+guard was given a new name with two more underscores:</p>
+<pre><code class="language-c">#if (defined _WCHAR_H || defined __need_mbstate_t) \
+    &amp;&amp; !defined ____mbstate_t_defined
+# define ____mbstate_t_defined 1
+typedef struct { ... } __mbstate_t;
+#endif
+#undef __need_mbstate_t
+
+#ifdef _WCHAR_H
+# ifndef __mbstate_t_defined
+typedef __mbstate_t mbstate_t;
+#  define __mbstate_t_defined 1
+# endif
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>guard</th>
+<th>through 2.15</th>
+<th>from 2.16</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>__mbstate_t_defined</code> (two underscores)</td>
+<td>the private struct</td>
+<td>the public alias</td>
+</tr>
+<tr>
+<td><code>____mbstate_t_defined</code> (four underscores)</td>
+<td>unused</td>
+<td>the private struct</td>
+</tr>
+</tbody>
+</table>
+<p>The same spelling now records a different fact. The struct's fields
+and layout did not change; nothing broke at the ABI. What broke is
+any code outside glibc that coordinated with the old spelling.</p>
+<h3>3.4 glibc 2.26: the guards move house</h3>
+<p>Zack Weinberg's &quot;Remove __need macros from stdio.h and wchar.h&quot;
+(authored 2016-11-20, committed 2017-06-08, commit <code>199fc19d3a</code>,
+released in glibc 2.26 on 2017-08-02) applied to these headers the
+single-type-header treatment already used for <code>&lt;time.h&gt;</code>. The two
+guards kept their 2.16 meanings and moved into two files:</p>
+<pre><code class="language-c">/* bits/types/__mbstate_t.h */
+#ifndef ____mbstate_t_defined
+#define ____mbstate_t_defined 1
+typedef struct { ... } __mbstate_t;
+#endif
+
+/* bits/types/mbstate_t.h */
+#ifndef __mbstate_t_defined
+#define __mbstate_t_defined 1
+#include &lt;bits/types/__mbstate_t.h&gt;
+typedef __mbstate_t mbstate_t;
+#endif
+</code></pre>
+<p><code>&lt;stdio.h&gt;</code> now reaches the struct through <code>bits/types/__fpos_t.h</code>;
+<code>&lt;wchar.h&gt;</code> and <code>&lt;uchar.h&gt;</code> include <code>bits/types/mbstate_t.h</code>. The
+public guard encloses both the include of the private header and the
+typedef: it guards the fact &quot;the public type is defined&quot;, and
+predefining it suppresses the private include along with the alias.
+<code>&lt;wchar.h&gt;</code> acquired an ordinary include guard, and <code>__need_mbstate_t</code>
+is no longer honored anywhere: defining it and including <code>&lt;wchar.h&gt;</code>
+yields the whole header.</p>
+<h3>3.5 Chronology</h3>
+<table>
+<thead>
+<tr>
+<th>date</th>
+<th>glibc</th>
+<th>change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1999-06-16</td>
+<td>2.1.x</td>
+<td>private <code>__mbstate_t</code> and public alias split; <code>__need_mbstate_t</code> selective inclusion (<code>d64b6ad075</code>)</td>
+</tr>
+<tr>
+<td>2012-01-01</td>
+<td>2.16</td>
+<td>public alias guarded by the repurposed <code>__mbstate_t_defined</code>; struct guarded by <code>____mbstate_t_defined</code> (<code>db6af3ebf4</code>)</td>
+</tr>
+<tr>
+<td>2017-03-16</td>
+<td>2.26</td>
+<td>obsolete C++ namespace wrappers removed from the headers (<code>2072f5c34e</code>)</td>
+</tr>
+<tr>
+<td>2017-06-08</td>
+<td>2.26</td>
+<td>guards moved into <code>bits/types/{__mbstate_t,mbstate_t}.h</code>; need-macros dropped (<code>199fc19d3a</code>)</td>
+</tr>
+<tr>
+<td>2018-01</td>
+<td>2.27</td>
+<td><code>fpos_t</code> moved into <code>bits/types/__fpos_t.h</code>, keeping the private dependency</td>
+</tr>
+</tbody>
+</table>
+<h2>4. Why the protocol fails from 2.16 on</h2>
+<p>Both orders, traced against the 2.16 and later guards:</p>
+<ul>
+<li><strong>stdcxx first.</strong> <code>_mbstate.h</code> defines the struct and sets
+<code>__mbstate_t_defined</code>. glibc later checks <code>____mbstate_t_defined</code>,
+finds it unset, and defines the struct again: the conflicting
+declaration. Then <code>&lt;wchar.h&gt;</code> checks <code>__mbstate_t_defined</code>, finds it
+set, and skips the public alias. The program has no <code>mbstate_t</code>.</li>
+<li><strong>glibc first.</strong> <code>&lt;stdio.h&gt;</code> defines the struct and sets
+<code>____mbstate_t_defined</code>. <code>_mbstate.h</code> checks <code>__mbstate_t_defined</code>,
+finds it unset, and defines the struct again.</li>
+</ul>
+<p>No adjustment of the guard alone repairs this. Switching stdcxx to the
+four-underscore guard breaks every glibc through 2.15. Setting both
+guards suppresses the public alias that <code>&lt;wchar.h&gt;</code> must provide.
+Testing the glibc version number would work, but it is a pin on
+version knowledge rather than a characterization of the platform,
+which is not how this library handles a platform that has moved.</p>
+<p>The compiler is not implicated. GCC's default C++ dialect did move
+during the same years (gnu++98 through GCC 5, gnu++14 from GCC 6 in
+2016, gnu++17 from GCC 11, gnu++20 by GCC 16), and stdcxx at the
+default dialect does trip over several C++98-isms elsewhere, all of
+them handled by the configuration correctly. This failure reproduces
+in C and at any dialect. It belongs to the C library.</p>
+<h2>5. The fix, in the library's idiom</h2>
+<p>stdcxx detects a platform feature with a <em>characterization</em>: a small
+source under <code>etc/config/src/</code> compiled during configuration, whose
+failure yields an <code>_RWSTD_NO_&lt;NAME&gt;</code> macro in <code>config.h</code>. Headers then
+branch on the macro. The configuration is demand-driven, so a new
+characterization needs no wiring beyond the file.</p>
+<p>The new characterization, <code>BITS_TYPES___MBSTATE_T_H.cpp</code>, is
+compile-only and asks the one question the Linux branch needs:</p>
+<pre><code class="language-c">#include &lt;bits/types/__mbstate_t.h&gt;
+__mbstate_t state;
+</code></pre>
+<p>The Linux branch of <code>_mbstate.h</code> becomes a decision branch on its
+answer:</p>
+<pre><code class="language-c">#ifndef _RWSTD_NO_BITS_TYPES___MBSTATE_T_H
+   // glibc 2.26 and beyond: the private type has a header of its own
+#  include &lt;bits/types/__mbstate_t.h&gt;
+#else
+   // earlier glibc: ask &lt;wchar.h&gt; for just the private type, the way
+   // &lt;stdio.h&gt; does for fpos_t
+#  include &lt;features.h&gt;
+#  define __need_mbstate_t
+#  include _RWSTD_ANSI_C_WCHAR_H
+#endif
+#define _RWSTD_MBSTATE_T __mbstate_t
+</code></pre>
+<p>The default path is the Darwin precedent applied to glibc: include the
+platform's designated single-type header. It is minimal, and it is
+immune to any change in the struct's layout, which a copied struct is
+not.</p>
+<p>The fallback path replicates nothing. It makes exactly the request
+libio's <code>_G_config.h</code> made for <code>fpos_t</code> from 1999 to 2.25, so it
+behaves identically on every glibc of that span with no knowledge of
+which guard means what. Two details matter:</p>
+<ul>
+<li><code>&lt;features.h&gt;</code> comes first. The partial path of <code>&lt;wchar.h&gt;</code> does not
+include it, and from 2.15 on that path evaluates <code>__GNUC_PREREQ</code>
+when it has to obtain <code>wint_t</code>. glibc's own callers never noticed
+because <code>&lt;stdio.h&gt;</code> had included <code>&lt;features.h&gt;</code> already; stdcxx's
+header can be the first glibc-touching line of a translation unit.</li>
+<li>Only <code>__need_mbstate_t</code> is requested. libio requested <code>__need_wint_t</code>
+as well, but only when building glibc itself or under libstdc++'s
+<code>_GLIBCPP_USE_WCHAR_T</code>; an ordinary program never did. The struct
+takes its member type from the compiler's <code>__WINT_TYPE__</code> when that
+is defined, and <code>&lt;features.h&gt;</code> makes the other case safe.</li>
+</ul>
+<p>On a libc that honors neither mechanism, the fallback serves the whole
+<code>&lt;wchar.h&gt;</code>. That is what the generic branch does on every other
+platform: correct, merely not minimal, and never a conflicting
+declaration. The failure mode of an unknown future glibc is therefore
+a slower compile, not a broken one.</p>
+<p>The name of the characterization keeps the header's spelling, three
+underscores and all, because <code>BITS_TYPES_MBSTATE_T_H</code> would read as
+the <em>other</em> header.</p>
+<h2>6. Verification</h2>
+<p><strong>Default path, on the current toolchain.</strong> A fresh configuration
+answers &quot;ok&quot; for the characterization; the library builds with zero
+errors and <code>libstd15D.so.4.2.2</code> links. Two programs with opposite
+include orders (<code>&lt;cstdio&gt;</code> before <code>&lt;cwchar&gt;</code> and <code>&lt;ios&gt;</code>, and the
+reverse with <code>&lt;wchar.h&gt;</code> added) compile with <code>-nostdinc++</code>, link
+against the library, and run, using <code>std::mbstate_t</code>, <code>::mbstate_t</code>,
+<code>std::streampos</code> and <code>std::mbsinit</code>.</p>
+<p><strong>Fallback path, against the headers of each epoch.</strong> No glibc older
+than 2.44 is installed anywhere convenient, so the fallback was
+exercised the way glibc's own maintainers test header coordination:
+the real <code>wchar.h</code> and <code>features.h</code> of each release tag, taken from a
+glibc clone, with every unrelated header they include stubbed empty,
+preprocessed by GCC 16. Four translation units cover the orders the
+library produces:</p>
+<table>
+<thead>
+<tr>
+<th>case</th>
+<th>sequence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>the fallback alone</td>
+</tr>
+<tr>
+<td>B</td>
+<td>the fallback, then a full <code>&lt;wchar.h&gt;</code></td>
+</tr>
+<tr>
+<td>C</td>
+<td>a full <code>&lt;wchar.h&gt;</code>, then the fallback</td>
+</tr>
+<tr>
+<td>D</td>
+<td>a <code>&lt;stdio.h&gt;</code>-style partial request, then the fallback, then a full <code>&lt;wchar.h&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<p>The check counts definitions in the preprocessed output: the private
+struct must appear exactly once in every case, the public alias
+exactly once in B, C and D and not at all in A, and after A neither
+<code>_WCHAR_H</code> nor <code>__need_mbstate_t</code> may be left defined.</p>
+<table>
+<thead>
+<tr>
+<th>glibc</th>
+<th>A</th>
+<th>B</th>
+<th>C</th>
+<th>D</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2.3.6 (2005)</td>
+<td>1 / 0</td>
+<td>1 / 1</td>
+<td>1 / 1</td>
+<td>1 / 1</td>
+</tr>
+<tr>
+<td>2.15 (2012)</td>
+<td>1 / 0</td>
+<td>1 / 1</td>
+<td>1 / 1</td>
+<td>1 / 1</td>
+</tr>
+<tr>
+<td>2.17 (2012)</td>
+<td>1 / 0</td>
+<td>1 / 1</td>
+<td>1 / 1</td>
+<td>1 / 1</td>
+</tr>
+<tr>
+<td>2.25 (2017)</td>
+<td>1 / 0</td>
+<td>1 / 1</td>
+<td>1 / 1</td>
+<td>1 / 1</td>
+</tr>
+</tbody>
+</table>
+<p>(private / public definitions.) Two variants were run to confirm the
+details in section 5: requesting <code>__need_wint_t</code> without <code>&lt;features.h&gt;</code>
+fails on 2.15, 2.17 and 2.25 with <code>missing binary operator before token '('</code> at the <code>__GNUC_PREREQ</code> line, and requesting only
+<code>__need_mbstate_t</code> without <code>&lt;features.h&gt;</code> passes everywhere under GCC
+because <code>__WINT_TYPE__</code> is predefined.</p>
+<p><strong>Degradation.</strong> Forcing the fallback on glibc 2.44 by predefining the
+<code>_RWSTD_NO_</code> macro compiles, links and runs the same smoke program,
+with the whole <code>&lt;wchar.h&gt;</code> served, as predicted.</p>
+<p>The epoch matrix verifies conditional declaration behavior, not a full
+historical build or a target ABI. It is the check that settles the
+question the fix asks, and no more.</p>
+<h2>7. What this one teaches</h2>
+<p>The library's protocol was correct within its epoch and fails completely
+outside it. It is representative of a kind of solution this library
+uses in places: coordination with a platform's internals through the
+platform's own private macros. Such a solution has no expiry date
+written on it, and when the platform repurposes a name the failure
+arrives without warning, years later, in a tree nobody is building.</p>
+<p>The durable form is the one the library already had for Darwin:
+obtain the thing from the platform's designated mechanism, and let a
+characterization discover which mechanism this platform offers. When
+the mechanism moves again, the characterization says &quot;no&quot; and the
+fallback degrades to the generic case rather than to a conflicting
+declaration.</p>
+<h2>Sources</h2>
+<ul>
+<li>glibc commits <code>d64b6ad075</code> (1999-06-16), <code>db6af3ebf4</code> (2012-01-01),
+<code>2072f5c34e</code> (2017-03-16), <code>199fc19d3a</code> (2017-06-08), in the glibc
+git repository at sourceware.org.</li>
+<li>Ulrich Drepper, &quot;Add uchar.h support, part 1&quot;, glibc-cvs notification,
+2012-01-03: <a href="https://sourceware.org/pipermail/glibc-cvs/2012q1/051306.html">https://sourceware.org/pipermail/glibc-cvs/2012q1/051306.html</a></li>
+<li>Zack Weinberg, &quot;The bits/types/*.h treatment for stdio and wchar&quot;,
+libc-alpha, 2016-11-21: <a href="https://sourceware.org/pipermail/libc-alpha/2016-November/076366.html">https://sourceware.org/pipermail/libc-alpha/2016-November/076366.html</a></li>
+<li>Joseph Myers, &quot;Remove C++ namespace handling from glibc headers&quot;,
+libc-alpha, 2017-03-10: <a href="https://sourceware.org/pipermail/libc-alpha/2017-March/079184.html">https://sourceware.org/pipermail/libc-alpha/2017-March/079184.html</a></li>
+<li>Gert Ohme, &quot;glibc-2.1.x current CVS; proposed patches&quot;, libc-alpha,
+1999-07-31: <a href="https://sourceware.org/pipermail/libc-alpha/1999-July/001261.html">https://sourceware.org/pipermail/libc-alpha/1999-July/001261.html</a></li>
+<li>ISO/IEC 9899:2011 (N1570), 7.1.3, 7.21.2, 7.28, 7.29.1:
+<a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf">https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf</a></li>
+<li>stdcxx commits <code>75dd7664</code>, <code>e01920a8</code>, <code>bb381444</code> (January 2006), the
+history of <code>include/rw/_mbstate.h</code>.</li>
+</ul>
+    </article>
+
+    <nav aria-label="Primary">
+      <a href="https://github.com/thinkoid/stdcxx/blob/master/doc/notes/glibc-mbstate_t.md">
+        the source of this note, on github<span aria-hidden="true"> →</span>
+      </a>
+      <a href="../stdcxx.html">
+        <span aria-hidden="true">← </span>stdcxx
+      </a>
+    </nav>
+  </main>
+</body>
+</html>

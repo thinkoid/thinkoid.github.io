@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>stdcxx — Thinkoid</title>
+  <meta name="description" content="Thinkoid stdcxx project: reviving the Apache C++ Standard Library on a current toolchain.">
+
+  <link rel="stylesheet" href="css/simple.css">
+</head>
+
+<body>
+  <main>
+    <a href="./">
+      <img
+        class="logo"
+        src="img/transparent-logo-invert.png"
+        alt="Thinkoid">
+    </a>
+
+    <h1>stdcxx</h1>
+
+    <p class="story">
+      stdcxx is the Apache C++ Standard Library: Rogue Wave's standard
+      library implementation, open-sourced in 2005, developed through
+      2008, dormant after, and retired to the Apache attic in 2012. It
+      is a complete C++98 library with its own iostreams, locales and
+      containers, built by a configuration system that characterizes
+      the compiler with a few hundred small test programs rather than
+      trusting version numbers. I was one of its committers.
+    </p>
+
+    <p class="story">
+      The revival builds the last maintenance line against a current
+      GCC and glibc, twenty years of drift in the toolchain and none in
+      the tree. The rule is to work in the library's own idiom: where a
+      platform has moved, write a characterization for what it now
+      offers and let the headers branch on the answer, never pin the
+      compiler back or patch around the machinery. Each failure gets
+      the same treatment, and the ones worth writing up become notes.
+    </p>
+
+    <nav aria-label="Primary">
+      <a href="stdcxx/glibc-mbstate_t.html">
+        the <code>__mbstate_t</code> clash: a 2006 header protocol meets glibc 2.16<span aria-hidden="true"> →</span>
+      </a>
+      <a href="https://github.com/thinkoid/stdcxx">
+        source, on github<span aria-hidden="true"> →</span>
+      </a>
+      <a href="archaeology.html">
+        <span aria-hidden="true">← </span>software archaeology
+      </a>
+    </nav>
+  </main>
+</body>
+</html>
