@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Artix Linux on the Dell XPS 13 9345 — Thinkoid</title>
+  <meta name="description" content="Installing Artix Linux on Dell's Snapdragon X Elite laptop: the 64 GB that are 31, the port that is nothing until a DSP names it, and a blueprint with scripts.">
+
+  <link rel="stylesheet" href="css/simple.css">
+</head>
+
+<body>
+  <main>
+    <a href="./">
+      <img
+        class="logo"
+        src="img/transparent-logo-invert.png"
+        alt="Thinkoid">
+    </a>
+
+    <article class="story">
+<h1>Artix Linux on the Dell XPS 13 9345</h1>
+<p>
+  <em>September 2026.</em>
+</p>
+
+<p>
+  I wanted an ARM machine for C and C++ development, and mostly for the
+  fun of it. Dell's XPS 13 9345 is beautiful and it has strong specs: a
+  12-core Snapdragon X Elite, 64 GB of memory, a 2880×1800 beautiful
+  OLED panel, and a battery that lasts (allegedly). It arrived with
+  Windows, and I want to run Linux. Therefore, I installed Linux, the
+  same flavor I run on all my machines: Artix Linux + s6 with a
+  compositor of my own.
+</p>
+
+<p>
+  I am writing on this laptop right now. The result is a blueprint, <a
+  href="https://github.com/thinkoid/artix-xps13-9345">thinkoid/artix-xps13-9345</a>,
+  with the three scripts that do the work and two documents that explain
+  every step and every decision, from shrinking Windows to a Wayland
+  desktop with the GPU, Wi-Fi, the battery gauge, suspend and the lid.
+  Every stage was run on the machine. This post is the story of the
+  parts that were not in the manual.
+</p>
+
+<h2>Hurdles</h2>
+
+<p>
+  The machine reset seconds after the kernel started, every time. Under
+  Qualcomm's hypervisor no device can reach the top 32 GiB of memory,
+  and any DMA into it resets the SoC; a 64 GB machine puts half its
+  memory there. Adding <code>mem=31G</code> on every boot entry (not 32,
+  see the docs) keeps the machine booting until either Linux runs at EL2
+  or Dell fixes the firmware.
+</p>
+
+<p>
+  The loader resets the machine, with no output, on an initramfs larger
+  than about 224 MB. Arch's fallback image is 272 MB, so the recovery
+  entry never could have worked. Thus, the installer writes none.
+</p>
+
+<p>
+  A USB-C port here does nothing until a chain of drivers brings it up,
+  ending in a DSP that tells the kernel what is plugged in. The
+  initramfs in Arch Linux ARM's tarball, generated on their build
+  server, holds exactly one module, so the first published stick booted
+  a kernel that waited forever for a stick it could not see. The script
+  now names the modules, and a <a
+  href="https://github.com/thinkoid/artix-xps13-9345/blob/master/doc/usb-primer.md">primer</a>
+  walks the chain.
+</p>
+
+<p>
+  Unfortunately, ARMtix's kernel has the Snapdragon X options off.
+  Luckily for us Arch Linux ARM's has them on. The install borrows the
+  Arch kernel and firmware and pins them. I created a merge request to
+  add the missing thirty-four lines to ARMtix's package. We'll see where
+  that goes. ARMtix's firmware files are also compressed in a format
+  that the kernel cannot read, so that had to be solved as well.
+</p>
+
+<h2>What is in the repository</h2>
+
+<p>
+  A <code>PKGBUILD</code> that pins every download by checksum, so the
+  payload is fetched and verified with one command. A script that writes
+  the install stick, a script that after boot installs onto the internal
+  disk (alongside a shrunken Windows), and the two documents: the
+  blueprint, stages one to five with the reasons, and a system update
+  companion for living with the pins. The documents are CC BY-SA, the
+  scripts MIT. The machine in the documents is called <em>sokath</em>,
+  from the Tamarian for eyes opened.
+</p>
+
+<p>
+  The whole of it was done in a week, with Claude as a second, or a
+  thousandth, pair of hands: the bisects, log analysis, compilation of
+  data from multiple sources, the scripts, the record keeping. The
+  decisions and the mistakes and the failures are mine. I am the
+  bottleneck. If you have this laptop model and you try it, the
+  repository takes issues, and a report with the log attached is the
+  fastest way to a fix in the text.
+</p>
+    </article>
+
+    <nav aria-label="Primary">
+      <a href="https://github.com/thinkoid/artix-xps13-9345">
+        the blueprint, on github<span aria-hidden="true"> →</span>
+      </a>
+      <a href="./">
+        <span aria-hidden="true">← </span>thinkoid.org
+      </a>
+    </nav>
+  </main>
+</body>
+</html>
